@@ -53,15 +53,11 @@ exports.default = new Transformer({
 
     const { js, css } = compile(code, config.compiler);
 
-    // FIXME: source map should be set in different way ?
-    if (false && options.sourceMaps) {
-      asset.setMap(SourceMap.fromRawSourceMap(js.map));
-    }
-
     return [
       {
         type: 'js',
-        code: js.code
+        code: js.code,
+        map: SourceMap.fromRawSourceMap(js.map)
       },
       css && {
         type: 'css',
