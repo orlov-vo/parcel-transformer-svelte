@@ -57,11 +57,12 @@ exports.default = new Transformer({
       {
         type: 'js',
         code: js.code,
-        map: SourceMap.fromRawSourceMap(js.map)
+        map: await SourceMap.fromRawSourceMap(js.map)
       },
-      css && {
+      css && css.code && {
         type: 'css',
-        code: css.code
+        code: css.code,
+        map: await SourceMap.fromRawSourceMap(css.map)
       }
     ].filter(Boolean);
   }
