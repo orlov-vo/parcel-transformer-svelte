@@ -13,7 +13,7 @@ After this you should configure in `.parcelrc` the transformation for Svelte fil
 ```json
 {
   "extends": ["@parcel/config-default"],
-  "transforms": {
+  "transformers": {
     "*.svelte": ["parcel-transformer-svelte"]
   }
 }
