@@ -13,10 +13,15 @@
   ],
   "engines": {
     "node": ">=8",
-    "parcel": "^2.0.0-alpha.2"
+    "parcel": "^2.0.0-beta.1"
   },
   "peerDependencies": {
-    "@parcel/plugin": "^2.0.0-alpha.2",
     "svelte": "^3.0.0"
+  },
+  "dependencies": {
+    "@parcel/plugin": "^2.0.0-beta.1",
+    "@parcel/source-map": "^2.0.0-alpha.4.13",
+    "@parcel/utils": "^2.0.0-beta.1",
+    "svelte": "^3.24.0"
   }
 }
