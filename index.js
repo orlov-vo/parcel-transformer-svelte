@@ -39,19 +39,19 @@ exports.default = new Transformer({
     return { compiler, preprocessors };
   },
 
-  async transform({ asset, config }) {
+  async transform({ asset, options }) {
     let code = await asset.getCode();
 
-    if (config.preprocessors) {
+    if (options.preprocessors) {
       const preprocessed = await preprocess(
         code,
-        config.preprocessors,
-        config.compiler
+        options.preprocessors,
+        options.compiler
       );
       code = preprocessed.toString();
     }
 
-    const { js, css } = compile(code, config.compiler);
+    const { js, css } = compile(code, options.compiler);
 
     return [
       {
