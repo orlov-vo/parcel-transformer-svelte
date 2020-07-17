@@ -18,6 +18,17 @@ function generateName(input) {
   name = name[0].toUpperCase() + name.slice(1);
 }
 
+function extractSourceMaps(asset, sourceMap) {
+  if (!sourceMap) return
+
+  sourceMap.sources = [asset.filePath];
+
+  const map = new SourceMap();
+  map.addRawMappings(sourceMap);
+
+  return map
+}
+
 exports.default = new Transformer({
   async getConfig({ asset, options }) {
     const sourceFileName = relativeUrl(options.projectRoot, asset.filePath);
@@ -56,13 +67,13 @@ exports.default = new Transformer({
     return [
       {
         type: 'js',
-        code: js.code,
-        map: await SourceMap.fromRawSourceMap(js.map)
+        content: js.code,
+        map: extractSourceMaps(asset, js.map)
       },
       css && css.code && {
         type: 'css',
-        code: css.code,
-        map: await SourceMap.fromRawSourceMap(css.map)
+        content: css.code,
+        map: extractSourceMaps(asset, css.map)
       }
     ].filter(Boolean);
   }
