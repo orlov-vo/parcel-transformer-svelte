@@ -1,6 +1,6 @@
 {
   "name": "parcel-transformer-svelte",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Parcel 2 transformer for Svelte 3",
   "main": "index.js",
   "author": "Vladislav Orlov <me@orlov-vo.ru>",
