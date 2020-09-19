@@ -62,7 +62,9 @@ exports.default = new Transformer({
       code = preprocessed.toString();
     }
 
-    const { js, css } = compile(code, options.compiler);
+    // Avoid duplicate inline CSS from <style> tags
+    const options = Object.assign({ css: false }, options.compiler);
+    const { js, css } = compile(code, options);
 
     return [
       {
