@@ -1,82 +1,86 @@
-const path = require('path');
-const { Transformer } = require('@parcel/plugin');
-const { default: SourceMap } = require('@parcel/source-map');
-const { relativeUrl } = require('@parcel/utils');
-const { compile, preprocess } = require('svelte/compiler.js');
+const path = require("path");
+const { Transformer } = require("@parcel/plugin");
+const { default: SourceMap } = require("@parcel/source-map");
+const { relativeUrl } = require("@parcel/utils");
+const { compile, preprocess } = require("svelte/compiler.js");
+const { exit } = require("process");
 
-Object.defineProperty(exports, '__esModule', { value: true });
+Object.defineProperty(exports, "__esModule", { value: true });
 
 function generateName(input) {
   let name = path
     .basename(input)
-    .replace(path.extname(input), '')
-    .replace(/[^a-zA-Z_$0-9]+/g, '_')
-    .replace(/^_/, '')
-    .replace(/_$/, '')
-    .replace(/^(\d)/, '_$1');
+    .replace(path.extname(input), "")
+    .replace(/[^a-zA-Z_$0-9]+/g, "_")
+    .replace(/^_/, "")
+    .replace(/_$/, "")
+    .replace(/^(\d)/, "_$1");
 
-  name = name[0].toUpperCase() + name.slice(1);
+  return name[0].toUpperCase() + name.slice(1);
 }
 
 function extractSourceMaps(asset, sourceMap) {
-  if (!sourceMap) return
+  if (!sourceMap) return;
 
   sourceMap.sources = [asset.filePath];
 
   const map = new SourceMap();
   map.addRawMappings(sourceMap);
 
-  return map
+  return map;
 }
 
 exports.default = new Transformer({
-  async getConfig({ asset, options }) {
-    const sourceFileName = relativeUrl(options.projectRoot, asset.filePath);
-
-    const customOptions =
-      (await asset.getConfig(['.svelterc', 'svelte.config.js'], {
-        packageKey: 'svelte'
+  async loadConfig({ config, options }) {
+    let customOptions =
+      (await config.getConfig([".svelterc", "svelte.config.js"], {
+        packageKey: "svelte",
       })) || {};
 
-    const compiler = {
-      css: false,
-      ...customOptions.compiler,
-      filename: sourceFileName,
-      name: generateName(sourceFileName),
-      dev: options.mode !== 'production'
+    const parcelCompilerOptions = {
+      dev: options.mode !== "production",
     };
-    const preprocessors = customOptions.preprocessors;
 
-    return { compiler, preprocessors };
+    const compiler = { ...customOptions.compiler, ...parcelCompilerOptions };
+    const preprocess = customOptions.preprocess;
+
+    config.setResult({
+      compiler,
+      preprocess,
+    });
   },
 
-  async transform({ asset, options }) {
+  async transform({ asset, config, options }) {
+    const filename = relativeUrl(options.projectRoot, asset.filePath);
+    const name = generateName(filename);
+
     let code = await asset.getCode();
 
-    if (options.preprocessors) {
-      const preprocessed = await preprocess(
-        code,
-        options.preprocessors,
-        options.compiler
-      );
+    if (config.preprocess) {
+      const preprocessed = await preprocess(code, config.preprocess, {
+        filename,
+      });
+      // TODO: add dependencies? see https://github.com/DeMoorJasper/parcel-plugin-svelte/blob/master/packages/parcel-plugin-svelte/lib/svelte-asset.js#L35
       code = preprocessed.toString();
     }
 
-    // Avoid duplicate inline CSS from <style> tags
-    const options = Object.assign({ css: false }, options.compiler);
-    const { js, css } = compile(code, options);
+    const compilerOptions = { ...config.compiler, css: false, filename, name };
+    const { js, css } = compile(code, compilerOptions);
 
     return [
       {
-        type: 'js',
+        type: "js",
         content: js.code,
-        map: extractSourceMaps(asset, js.map)
+        uniqueKey: asset.id + "-js",
+        map: extractSourceMaps(asset, js.map),
       },
-      css && css.code && {
-        type: 'css',
-        content: css.code,
-        map: extractSourceMaps(asset, css.map)
-      }
+      css &&
+        css.code && {
+          type: "css",
+          content: css.code,
+          uniqueKey: asset.id + "-css",
+          map: extractSourceMaps(asset, css.map),
+        },
     ].filter(Boolean);
-  }
+  },
 });
