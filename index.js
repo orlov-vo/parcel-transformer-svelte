@@ -15,7 +15,7 @@ function generateName(input) {
     .replace(/_$/, '')
     .replace(/^(\d)/, '_$1');
 
-  name = name[0].toUpperCase() + name.slice(1);
+  return name[0].toUpperCase() + name.slice(1);
 }
 
 function extractSourceMaps(asset, sourceMap) {
@@ -30,49 +30,57 @@ function extractSourceMaps(asset, sourceMap) {
 }
 
 exports.default = new Transformer({
-  async getConfig({ asset, options }) {
-    const sourceFileName = relativeUrl(options.projectRoot, asset.filePath);
-
+  async loadConfig({ config, options }) {
     const customOptions =
-      (await asset.getConfig(['.svelterc', 'svelte.config.js'], {
+      (await config.getConfig(['.svelterc', 'svelte.config.js'], {
         packageKey: 'svelte'
       })) || {};
 
     const compiler = {
       css: false,
       ...customOptions.compiler,
-      filename: sourceFileName,
-      name: generateName(sourceFileName),
-      dev: options.mode !== 'production'
-    };
-    const preprocessors = customOptions.preprocessors;
 
-    return { compiler, preprocessors };
+      dev: options.mode !== 'production',
+    };
+    const preprocess = customOptions.preprocess;
+
+    config.setResult({
+      compiler,
+      preprocess,
+    });
   },
 
-  async transform({ asset, options }) {
+  async transform({ asset, config, options }) {
     let code = await asset.getCode();
+    const sourceFileName = relativeUrl(options.projectRoot, asset.filePath);
+    const compilerOptions = {
+      ...config.compiler,
+      filename: sourceFileName,
+      name: generateName(sourceFileName),
+    };
 
-    if (options.preprocessors) {
+    if (config.preprocess) {
       const preprocessed = await preprocess(
         code,
-        options.preprocessors,
-        options.compiler
+        config.preprocess,
+        compilerOptions
       );
       code = preprocessed.toString();
     }
 
-    const { js, css } = compile(code, options.compiler);
+    const { js, css } = compile(code, compilerOptions);
 
     return [
       {
         type: 'js',
         content: js.code,
+        uniqueKey: `${asset.id}-js`,
         map: extractSourceMaps(asset, js.map)
       },
       css && css.code && {
         type: 'css',
         content: css.code,
+        uniqueKey: `${asset.id}-css`,
         map: extractSourceMaps(asset, css.map)
       }
     ].filter(Boolean);
