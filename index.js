@@ -19,21 +19,21 @@ function generateName(input) {
 }
 
 function extractSourceMaps(asset, sourceMap) {
-  if (!sourceMap) return
+  if (!sourceMap) return;
 
   sourceMap.sources = [asset.filePath];
 
   const map = new SourceMap();
   map.addRawMappings(sourceMap);
 
-  return map
+  return map;
 }
 
 exports.default = new Transformer({
   async loadConfig({ config, options }) {
     const customOptions =
       (await config.getConfig(['.svelterc', 'svelte.config.js'], {
-        packageKey: 'svelte'
+        packageKey: 'svelte',
       })) || {};
 
     const compiler = {
@@ -63,7 +63,7 @@ exports.default = new Transformer({
       const preprocessed = await preprocess(
         code,
         config.preprocess,
-        compilerOptions
+        compilerOptions,
       );
       code = preprocessed.toString();
     }
@@ -75,14 +75,14 @@ exports.default = new Transformer({
         type: 'js',
         content: js.code,
         uniqueKey: `${asset.id}-js`,
-        map: extractSourceMaps(asset, js.map)
+        map: extractSourceMaps(asset, js.map),
       },
-      css && css.code && {
+      Boolean(css && css.code) && {
         type: 'css',
         content: css.code,
         uniqueKey: `${asset.id}-css`,
-        map: extractSourceMaps(asset, css.map)
-      }
+        map: extractSourceMaps(asset, css.map),
+      },
     ].filter(Boolean);
-  }
+  },
 });
