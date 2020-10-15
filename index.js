@@ -36,16 +36,24 @@ exports.default = new Transformer({
         packageKey: 'svelte',
       })) || {};
 
-    const compiler = {
+    if (customOptions.compiler) {
+      console.error(
+        'The "compiler" option in .svelterc is deprecated, use "compilerOptions" instead',
+      );
+      customOptions.compilerOptions =
+        customOptions.compilerOptions || customOptions.compiler;
+    }
+
+    const compilerOptions = {
       css: false,
-      ...customOptions.compiler,
+      ...customOptions.compilerOptions,
 
       dev: options.mode !== 'production',
     };
     const preprocess = customOptions.preprocess;
 
     config.setResult({
-      compiler,
+      compilerOptions,
       preprocess,
     });
   },
@@ -54,7 +62,7 @@ exports.default = new Transformer({
     let code = await asset.getCode();
     const sourceFileName = relativeUrl(options.projectRoot, asset.filePath);
     const compilerOptions = {
-      ...config.compiler,
+      ...config.compilerOptions,
       filename: sourceFileName,
       name: generateName(sourceFileName),
     };

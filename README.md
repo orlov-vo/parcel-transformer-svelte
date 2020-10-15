@@ -29,7 +29,7 @@ For documentation on which options you can use look at the official
 
 ```js
 // Options used by svelte.compile
-compiler: {
+compilerOptions: {
   ...
 },
 // Preprocessors for svelte.preprocess
