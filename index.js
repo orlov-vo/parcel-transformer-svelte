@@ -29,6 +29,14 @@ function extractSourceMaps(asset, sourceMap) {
   return map;
 }
 
+async function handleError(sourceFileName, func) {
+  try {
+    return await func();
+  } catch (error) {
+    throw new Error(`Error in file ${sourceFileName}: ${error}`);
+  }
+}
+
 exports.default = new Transformer({
   async loadConfig({ config, options }) {
     const customOptions =
@@ -59,42 +67,44 @@ exports.default = new Transformer({
   },
 
   async transform({ asset, config, options }) {
+    let code = await asset.getCode();
     const sourceFileName = relativeUrl(options.projectRoot, asset.filePath);
-    try {
-      let code = await asset.getCode();
-      const compilerOptions = {
-        ...config.compilerOptions,
-        filename: sourceFileName,
-        name: generateName(sourceFileName),
-      };
+    const compilerOptions = {
+      ...config.compilerOptions,
+      filename: sourceFileName,
+      name: generateName(sourceFileName),
+    };
 
-      if (config.preprocess) {
-        const preprocessed = await preprocess(
+    if (config.preprocess) {
+      const preprocessed = await handleError(
+        sourceFileName,
+        () => preprocess(
           code,
           config.preprocess,
           compilerOptions,
-        );
-        code = preprocessed.toString();
-      }
-
-      const { js, css } = compile(code, compilerOptions);
-
-      return [
-        {
-          type: 'js',
-          content: js.code,
-          uniqueKey: `${asset.id}-js`,
-          map: extractSourceMaps(asset, js.map),
-        },
-        Boolean(css && css.code) && {
-          type: 'css',
-          content: css.code,
-          uniqueKey: `${asset.id}-css`,
-          map: extractSourceMaps(asset, css.map),
-        },
-      ].filter(Boolean);
-    } catch (error) {
-      throw new Error(`Error in file ${sourceFileName}: ${error}`);
+        ),
+      );
+      code = preprocessed.toString();
     }
+
+    const { js, css } = await handleError(
+      sourceFileName,
+      () => compile(code, compilerOptions),
+    );
+
+    return [
+      {
+        type: 'js',
+        content: js.code,
+        uniqueKey: `${asset.id}-js`,
+        map: extractSourceMaps(asset, js.map),
+      },
+      Boolean(css && css.code) && {
+        type: 'css',
+        content: css.code,
+        uniqueKey: `${asset.id}-css`,
+        map: extractSourceMaps(asset, css.map),
+      },
+    ].filter(Boolean);
   },
 });
