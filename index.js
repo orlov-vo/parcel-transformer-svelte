@@ -29,6 +29,14 @@ function extractSourceMaps(asset, sourceMap) {
   return map;
 }
 
+async function handleError(sourceFileName, func) {
+  try {
+    return await func();
+  } catch (error) {
+    throw new Error(`Error in file ${sourceFileName}: ${error}`);
+  }
+}
+
 exports.default = new Transformer({
   async loadConfig({ config, options }) {
     const customOptions =
@@ -68,15 +76,21 @@ exports.default = new Transformer({
     };
 
     if (config.preprocess) {
-      const preprocessed = await preprocess(
-        code,
-        config.preprocess,
-        compilerOptions,
+      const preprocessed = await handleError(
+        sourceFileName,
+        () => preprocess(
+          code,
+          config.preprocess,
+          compilerOptions,
+        ),
       );
       code = preprocessed.toString();
     }
 
-    const { js, css } = compile(code, compilerOptions);
+    const { js, css } = await handleError(
+      sourceFileName,
+      () => compile(code, compilerOptions),
+    );
 
     return [
       {
