@@ -76,20 +76,14 @@ exports.default = new Transformer({
     };
 
     if (config.preprocess) {
-      const preprocessed = await handleError(
-        sourceFileName,
-        () => preprocess(
-          code,
-          config.preprocess,
-          compilerOptions,
-        ),
+      const preprocessed = await handleError(sourceFileName, () =>
+        preprocess(code, config.preprocess, compilerOptions),
       );
       code = preprocessed.toString();
     }
 
-    const { js, css } = await handleError(
-      sourceFileName,
-      () => compile(code, compilerOptions),
+    const { js, css } = await handleError(sourceFileName, () =>
+      compile(code, compilerOptions),
     );
 
     return [
