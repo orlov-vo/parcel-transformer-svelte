@@ -6,6 +6,9 @@ const { compile, preprocess } = require('svelte/compiler.js');
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
+const CONFIG_FILES = ['.svelterc', 'svelte.config.js'];
+const CONFIG_PACKAGE_KEY = 'svelte';
+
 function generateName(input) {
   let name = path
     .basename(input)
@@ -37,12 +40,16 @@ async function handleError(sourceFileName, func) {
   }
 }
 
+async function getConfig(config) {
+  const packageKey = CONFIG_PACKAGE_KEY;
+  const data = await config.getConfig(CONFIG_FILES, { packageKey });
+
+  return data && data.contents ? data.contents : {};
+}
+
 exports.default = new Transformer({
   async loadConfig({ config, options }) {
-    const customOptions =
-      (await config.getConfig(['.svelterc', 'svelte.config.js'], {
-        packageKey: 'svelte',
-      })) || {};
+    const customOptions = await getConfig(config);
 
     if (customOptions.compiler) {
       console.error(
