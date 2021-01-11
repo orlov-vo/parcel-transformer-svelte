@@ -3,11 +3,9 @@ const { Transformer } = require('@parcel/plugin');
 const { default: SourceMap } = require('@parcel/source-map');
 const { relativeUrl } = require('@parcel/utils');
 const { compile, preprocess } = require('svelte/compiler.js');
+const { load, preSerialize, postDeserialize } = require('./loadConfig');
 
 Object.defineProperty(exports, '__esModule', { value: true });
-
-const CONFIG_FILES = ['.svelterc', 'svelte.config.js'];
-const CONFIG_PACKAGE_KEY = 'svelte';
 
 function generateName(input) {
   let name = path
@@ -40,51 +38,31 @@ async function handleError(sourceFileName, func) {
   }
 }
 
-async function getConfig(config) {
-  const packageKey = CONFIG_PACKAGE_KEY;
-  const data = await config.getConfig(CONFIG_FILES, { packageKey });
-
-  return data && data.contents ? data.contents : {};
-}
-
 exports.default = new Transformer({
-  async loadConfig({ config, options }) {
-    const customOptions = await getConfig(config);
+  loadConfig({ config, options, logger }) {
+    return load({ config, options, logger });
+  },
 
-    if (customOptions.compiler) {
-      console.error(
-        'The "compiler" option in .svelterc is deprecated, use "compilerOptions" instead',
-      );
-      customOptions.compilerOptions =
-        customOptions.compilerOptions || customOptions.compiler;
-    }
+  preSerializeConfig({ config }) {
+    return preSerialize(config);
+  },
 
-    const compilerOptions = {
-      css: false,
-      ...customOptions.compilerOptions,
-
-      dev: options.mode !== 'production',
-    };
-    const preprocess = customOptions.preprocess;
-
-    config.setResult({
-      compilerOptions,
-      preprocess,
-    });
+  postDeserializeConfig({ config, options }) {
+    return postDeserialize(config, options);
   },
 
   async transform({ asset, config, options }) {
     let code = await asset.getCode();
     const sourceFileName = relativeUrl(options.projectRoot, asset.filePath);
     const compilerOptions = {
-      ...config.compilerOptions,
+      ...config.raw.compilerOptions,
       filename: sourceFileName,
       name: generateName(sourceFileName),
     };
 
-    if (config.preprocess) {
+    if (config.hydrated.preprocess) {
       const preprocessed = await handleError(sourceFileName, () =>
-        preprocess(code, config.preprocess, compilerOptions),
+        preprocess(code, config.hydrated.preprocess, compilerOptions),
       );
       code = preprocessed.toString();
     }
