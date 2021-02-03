@@ -55,12 +55,12 @@ exports.default = new Transformer({
     let code = await asset.getCode();
     const sourceFileName = relativeUrl(options.projectRoot, asset.filePath);
     const compilerOptions = {
-      ...config.raw.compilerOptions,
+      ...(config ? config.raw.compilerOptions : null),
       filename: sourceFileName,
       name: generateName(sourceFileName),
     };
 
-    if (config.hydrated.preprocess) {
+    if (config && config.hydrated.preprocess) {
       const preprocessed = await handleError(sourceFileName, () =>
         preprocess(code, config.hydrated.preprocess, compilerOptions),
       );
