@@ -25,7 +25,7 @@ function extractSourceMaps(asset, sourceMap) {
   sourceMap.sources = [asset.filePath];
 
   const map = new SourceMap();
-  map.addRawMappings(sourceMap);
+  map.addVLQMap(sourceMap);
 
   return map;
 }
