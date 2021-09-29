@@ -27,6 +27,11 @@ in `package.json`.
 For documentation on which options you can use look at the official
 [svelte docs](https://github.com/sveltejs/svelte).
 
+When using svelte without preprocessors, you can use `.svelterc` to configure.
+This has caching benefits that are not possible with `svelte.config.js`;
+however, it is not possible to configure preprocessors without using the
+javascript config.
+
 ```js
 // Options used by svelte.compile
 compilerOptions: {
