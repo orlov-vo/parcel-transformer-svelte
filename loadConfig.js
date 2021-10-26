@@ -28,8 +28,8 @@ exports.load = async function load({ config, options, logger }) {
   const { contents } = configFile;
   const isDynamic = path.extname(configFile.filePath) === '.js';
 
-  if (typeof contents !== 'object') {
-    throw new Error('Svelte config should be an object.');
+  if (typeof contents !== 'object' && typeof contents !== 'string') {
+    throw new Error('Svelte config should be an object or a string.');
   }
 
   if (isDynamic) {
