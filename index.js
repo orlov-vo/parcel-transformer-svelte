@@ -19,13 +19,17 @@ function generateName(input) {
   return name[0].toUpperCase() + name.slice(1);
 }
 
-function extractSourceMaps(asset, sourceMap) {
-  if (!sourceMap) return;
+function extractSourceMaps(projectRoot, asset, originalSourceMap, sourceMap) {
+  if (!sourceMap) return originalSourceMap;
 
   sourceMap.sources = [asset.filePath];
 
-  const map = new SourceMap();
+  const map = new SourceMap(projectRoot);
   map.addVLQMap(sourceMap);
+
+  if (originalSourceMap) {
+    map.extends(originalSourceMap.toBuffer());
+  }
 
   return map;
 }
@@ -76,13 +80,23 @@ exports.default = new Transformer({
         type: 'js',
         content: js.code,
         uniqueKey: `${asset.id}-js`,
-        map: extractSourceMaps(asset, js.map),
+        map: extractSourceMaps(
+          options.projectRoot,
+          asset,
+          originalSourceMap,
+          js.map,
+        ),
       },
       Boolean(css && css.code) && {
         type: 'css',
         content: css.code,
         uniqueKey: `${asset.id}-css`,
-        map: extractSourceMaps(asset, css.map),
+        map: extractSourceMaps(
+          options.projectRoot,
+          asset,
+          originalSourceMap,
+          css.map,
+        ),
       },
     ].filter(Boolean);
   },
