@@ -40,11 +40,7 @@ exports.load = async function load({ config, options, logger }) {
       });
     }
 
-    config.shouldInvalidateOnStartup();
-
-    if (contents.preprocess) {
-      config.shouldReload();
-    }
+    config.invalidateOnStartup();
   }
 
   if (contents.compiler) {
