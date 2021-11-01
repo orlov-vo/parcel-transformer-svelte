@@ -1,6 +1,4 @@
-const path = require('path');
-
-Object.defineProperty(exports, '__esModule', { value: true });
+import path from 'path';
 
 const CONFIG_FILES = ['.svelterc', 'svelte.config.js'];
 const CONFIG_PACKAGE_KEY = 'svelte';
@@ -21,7 +19,7 @@ async function configHydrator(configFile, config, options) {
   });
 }
 
-exports.load = async function load({ config, options, logger }) {
+export async function load({ config, options, logger }) {
   const configFile = await getConfigFile(config);
   if (!configFile) return;
 
@@ -68,9 +66,9 @@ exports.load = async function load({ config, options, logger }) {
     config,
     options,
   );
-};
+}
 
-exports.preSerialize = function preSerialize(config) {
+export function preSerialize(config) {
   if (!config.result) return;
 
   // Ensure we don't pass preprocess functions to the serializer
@@ -80,8 +78,8 @@ exports.preSerialize = function preSerialize(config) {
 
   // This gets re-hydrated in Deserialize, so never store this
   config.result.hydrated = {};
-};
+}
 
-exports.postDeserialize = function postDeserialize(config, options) {
+export function postDeserialize(config, options) {
   return configHydrator(config.result.raw, config, options);
-};
+}
