@@ -1,9 +1,11 @@
-import path from 'path';
-import { Transformer } from '@parcel/plugin';
-import SourceMap from '@parcel/source-map';
-import { relativeUrl } from '@parcel/utils';
-import { compile, preprocess } from 'svelte/compiler.js';
-import { load, preSerialize, postDeserialize } from './loadConfig';
+const path = require('path');
+const { Transformer } = require('@parcel/plugin');
+const { default: SourceMap } = require('@parcel/source-map');
+const { relativeUrl } = require('@parcel/utils');
+const { compile, preprocess } = require('svelte/compiler.js');
+const { load, preSerialize, postDeserialize } = require('./loadConfig');
+
+Object.defineProperty(exports, '__esModule', { value: true });
 
 function generateName(input) {
   let name = path
@@ -40,7 +42,7 @@ async function handleError(sourceFileName, func) {
   }
 }
 
-export default new Transformer({
+exports.default = new Transformer({
   loadConfig({ config, options, logger }) {
     return load({ config, options, logger });
   },

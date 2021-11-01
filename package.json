@@ -2,7 +2,6 @@
   "name": "parcel-transformer-svelte",
   "version": "1.2.0",
   "description": "Parcel 2 transformer for Svelte 3",
-  "type": "module",
   "main": "index.js",
   "author": "Vladislav Orlov <me@orlov-vo.ru>",
   "repository": "github:orlov-vo/parcel-transformer-svelte",
@@ -17,7 +16,7 @@
     "/loadConfig.js"
   ],
   "engines": {
-    "node": ">=12",
+    "node": ">=8",
     "parcel": "^2.0.0"
   },
   "peerDependencies": {
