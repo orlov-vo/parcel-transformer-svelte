@@ -57,6 +57,8 @@ exports.default = new Transformer({
 
   async transform({ asset, config, options }) {
     let code = await asset.getCode();
+    const originalSourceMap = await asset.getMap();
+
     const sourceFileName = relativeUrl(options.projectRoot, asset.filePath);
     const compilerOptions = {
       ...(config ? config.raw.compilerOptions : null),
