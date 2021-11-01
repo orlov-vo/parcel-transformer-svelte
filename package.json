@@ -11,20 +11,24 @@
     "transformer",
     "svelte"
   ],
+  "files": [
+    "/index.js",
+    "/loadConfig.js"
+  ],
   "engines": {
     "node": ">=8",
-    "parcel": "^2.0.0-beta.1"
+    "parcel": "^2.0.0"
   },
   "peerDependencies": {
     "svelte": "^3.0.0"
   },
   "dependencies": {
-    "@parcel/plugin": "^2.0.0-beta.1",
-    "@parcel/source-map": "^2.0.0-alpha.4.13",
-    "@parcel/utils": "^2.0.0-beta.1",
-    "svelte": "^3.24.0"
+    "@parcel/plugin": "^2.0.0",
+    "@parcel/source-map": "^2.0.0",
+    "@parcel/utils": "^2.0.0",
+    "svelte": "^3.44.0"
   },
   "devDependencies": {
-    "prettier": "^2.2.1"
+    "prettier": "^2.4.1"
   }
 }
