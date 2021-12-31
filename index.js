@@ -1,111 +1,109 @@
-const path = require("path");
-const { Transformer } = require("@parcel/plugin");
-const { default: SourceMap } = require("@parcel/source-map");
-const { relativeUrl } = require("@parcel/utils");
-const { compile, preprocess } = require("svelte/compiler.js");
+import { Transformer } from "@parcel/plugin";
+import SourceMap from "@parcel/source-map";
+import { relativeUrl } from "@parcel/utils";
+import { compile, preprocess } from "svelte/compiler";
+import ThrowableDiagnostic from "@parcel/diagnostic";
+import preprocessor from "svelte-preprocess";
 
-Object.defineProperty(exports, "__esModule", { value: true });
-
-exports.default = new Transformer({
+export default new Transformer({
   async loadConfig({ config, options, logger }) {
-    const loaded = await config.getConfig([
+    const svelteConfig = await config.getConfig([
       ".svelterc",
+      ".svelterc.json",
       "svelte.config.js",
-      // Re-enable if/when `config.getConfig` supports loading mjs and cjs.
-      // "svelte.config.mjs",
-      // "svelte.config.cjs",
     ]);
-
-    if (!loaded) return {};
-
-    const { contents, filePath } = loaded;
-
-    if (filePath.endsWith(".js")) {
-      if (!contents.preprocess) {
-        logger.warn({
-          message:
-            "WARNING: Using a JavaScript Svelte config file means losing " +
-            "out on caching features of Parcel. Use a .svelterc(.json) " +
-            "file whenever possible.",
-        });
-      }
-      config.invalidateOnStartup();
-    }
-
-    if (contents.compiler) {
+    if (!svelteConfig) return {};
+    if (svelteConfig.filePath.endsWith(".js")) {
+      // TODO: Is there a better way of handling this warning? Probably just
+      // mention it in the documentation and silently invalidate.
       logger.warn({
         message:
-          'WARNING: The "compiler" option in .svelterc is deprecated, use ' +
-          '"compilerOptions" instead.',
+          "WARNING: Using a JavaScript Svelte config file means losing " +
+          "out on caching features of Parcel. Use a .svelterc(.json) " +
+          "file whenever possible.",
       });
-      contents.compilerOptions = contents.compilerOptions || contents.compiler;
+      config.invalidateOnStartup();
     }
-
     return {
-      ...contents,
+      ...svelteConfig.contents,
       compilerOptions: {
         css: false,
-        ...contents.compilerOptions,
+        ...svelteConfig.contents.compilerOptions,
         dev: options.mode !== "production",
       },
     };
   },
 
-  async transform({ asset, config, options }) {
+  async transform({
+    asset,
+    config: { preprocess: preprocessConf, compilerOptions },
+    options,
+    logger,
+  }) {
     let source = await asset.getCode();
     const filename = relativeUrl(options.projectRoot, asset.filePath);
 
-    if (config.preprocess) {
-      const preprocessed = await handleError(filename, () =>
-        preprocess(source, config.preprocess, { filename }),
-      );
-      source = preprocessed.toString();
+    // If the preprocessor config is never defined in the svelte config, attempt
+    // to import `svelte-preprocess`. If that is importable, use that to
+    // preprocess the file. Otherwise, do not run any preprocessors.
+    if (preprocessConf === undefined) {
+      logger.verbose({
+        message: "No preprocess specified; using `svelte-preprocess`.",
+      });
+      preprocessConf = preprocessor();
     }
 
-    const { js, css } = await handleError(filename, () =>
-      compile(source, {
-        ...config.compilerOptions,
-        filename,
-        name: generateName(filename),
-      }),
+    // Only preprocess if there is a config for it.
+    if (preprocessConf) {
+      logger.verbose({ message: "Preprocessing svelte file." });
+      const processed = await catchDiag(
+        async () =>
+          await preprocess(source, preprocessConf, {
+            filename,
+          }),
+        source,
+      );
+      source = processed.code;
+    }
+
+    logger.verbose({ message: "Compiling svelte file." });
+    const compiled = await catchDiag(
+      async () =>
+        await compile(source, {
+          ...compilerOptions,
+          filename,
+        }),
+      source,
     );
 
-    return [
+    // Create the new assets from the compilation result.
+    const assets = [
       {
         type: "js",
-        content: js.code,
+        content: compiled.js.code,
         uniqueKey: `${asset.id}-js`,
-        map: extractSourceMaps(asset, js.map),
+        map: extractSourceMaps(asset, compiled.js.map),
       },
-      Boolean(css && css.code) && {
+    ];
+    if (compiled.css && compiled.css.code) {
+      assets.push({
         type: "css",
-        content: css.code,
+        content: compiled.css.code,
         uniqueKey: `${asset.id}-css`,
-        map: extractSourceMaps(asset, css.map),
-      },
-    ].filter(Boolean);
+        map: extractSourceMaps(asset, compiled.css.map),
+      });
+    }
+
+    // Forward any warnings from the svelte compiler to the parcel diagnostics.
+    if (compiled.warnings.length > 0) {
+      for (const warning of compiled.warnings) {
+        logger.warn(convertDiag(warning));
+      }
+    }
+
+    return assets;
   },
 });
-
-async function handleError(sourceFileName, func) {
-  try {
-    return await func();
-  } catch (error) {
-    throw new Error(`Error in file ${sourceFileName}: ${error}`);
-  }
-}
-
-function generateName(input) {
-  let name = path
-    .basename(input)
-    .replace(path.extname(input), "")
-    .replace(/[^a-zA-Z_$0-9]+/g, "_")
-    .replace(/^_/, "")
-    .replace(/_$/, "")
-    .replace(/^(\d)/, "_$1");
-
-  return name[0].toUpperCase() + name.slice(1);
-}
 
 function extractSourceMaps(asset, sourceMap) {
   if (!sourceMap) return;
@@ -113,4 +111,31 @@ function extractSourceMaps(asset, sourceMap) {
   const map = new SourceMap();
   map.addVLQMap(sourceMap);
   return map;
+}
+
+async function catchDiag(fn, code) {
+  try {
+    return await fn();
+  } catch (e) {
+    throw new ThrowableDiagnostic({
+      diagnostic: convertDiag(e, code),
+    });
+  }
+}
+
+function convertDiag(svelteDiag, code) {
+  const codeFrame = {
+    filePath: svelteDiag.filename,
+    code,
+    codeHighlights: [
+      {
+        start: svelteDiag.start,
+        end: svelteDiag.end,
+      },
+    ],
+  };
+  return {
+    message: svelteDiag.message,
+    codeFrames: [codeFrame],
+  };
 }

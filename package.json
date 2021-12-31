@@ -1,10 +1,12 @@
 {
   "name": "parcel-transformer-svelte",
-  "version": "1.1.2",
+  "version": "2.0.0",
   "description": "Parcel 2 transformer for Svelte 3",
-  "main": "index.js",
-  "author": "Vladislav Orlov <me@orlov-vo.ru>",
-  "repository": "github:orlov-vo/parcel-transformer-svelte",
+  "main": "dist/index.js",
+  "module": "dist/module.js",
+  "source": "index.js",
+  "author": "Gregory Oakes <gregcoakes@gmail.com>",
+  "repository": "github:gcoakes/parcel-transformer-svelte",
   "license": "MIT",
   "keywords": [
     "parcel",
@@ -12,22 +14,24 @@
     "svelte"
   ],
   "engines": {
-    "node": ">=8",
-    "parcel": "^2.0.0-beta.1"
-  },
-  "peerDependencies": {
-    "svelte": "^3.0.0"
+    "node": ">= 12.0.0",
+    "parcel": "^2.0.1"
   },
   "dependencies": {
-    "@parcel/plugin": "^2.0.0-rc.0",
-    "@parcel/source-map": "^2.0.0-rc.7",
-    "@parcel/utils": "^2.0.0-rc.0",
-    "svelte": "^3.24.0"
+    "@parcel/diagnostic": "^2.0.1",
+    "@parcel/plugin": "^2.0.1",
+    "@parcel/source-map": "^2.0.0",
+    "@parcel/utils": "^2.0.1",
+    "svelte": "^3",
+    "svelte-preprocess": "^4.10.1",
+    "typescript": "^4.5.4"
   },
   "devDependencies": {
+    "parcel": "^2.0.1",
     "prettier": "^2.2.1"
   },
   "scripts": {
-    "test": "node test.mjs"
+    "test": "node test.mjs",
+    "build": "parcel build"
   }
 }
