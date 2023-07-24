@@ -16,7 +16,7 @@
     "/loadConfig.js"
   ],
   "engines": {
-    "node": ">=8",
+    "node": ">=16",
     "parcel": "^2.0.0"
   },
   "peerDependencies": {
