@@ -29,6 +29,6 @@
     "svelte": "^3.44.0"
   },
   "devDependencies": {
-    "prettier": "^2.4.1"
+    "prettier": "^3.0.0"
   }
 }
