@@ -2,7 +2,7 @@ const path = require('path');
 const { Transformer } = require('@parcel/plugin');
 const { default: SourceMap } = require('@parcel/source-map');
 const { relativeUrl } = require('@parcel/utils');
-const { compile, preprocess } = require('svelte/compiler.js');
+const { compile, preprocess } = require('svelte/compiler');
 const { load, preSerialize, postDeserialize } = require('./loadConfig');
 
 Object.defineProperty(exports, '__esModule', { value: true });

@@ -19,6 +19,15 @@ After this you should configure in `.parcelrc` the transformation for Svelte fil
 }
 ```
 
+> [!IMPORTANT]
+> To enable Svelte 4 support, you must also enable the [Exports Map feature in Parcel 2.9+](https://parceljs.org/blog/v2-9-0/#new-resolver) by padding this to package.json
+
+```json
+	"@parcel/resolver-default": {
+		"packageExports": true
+	},
+```
+
 ## Configuration
 
 You can change Svelte options though a `.svelterc`, `svelte.config.js` file or `svelte` field
